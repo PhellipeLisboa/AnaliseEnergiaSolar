@@ -12,8 +12,6 @@
 
 ---
 
----
-
 <h2 align="center"> Parte 1 </h2>
 
 > A primeira etapa contém:

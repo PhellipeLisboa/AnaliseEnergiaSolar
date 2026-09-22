@@ -1,0 +1,24 @@
+# Ambientes virtuais
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Dados
+dataset/
+*.csv
+*.parquet
+
+# Credenciais
+.env
+
+# Arquivos temporários
+*.log
+
+# Fontes originais de dados
+datasets/

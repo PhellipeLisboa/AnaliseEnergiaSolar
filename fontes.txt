@@ -1,0 +1,11 @@
+SOLAR POWER GENERATION DATA
+
+Fonte: https://www.kaggle.com/datasets/anikannal/solar-power-generation-data
+
+Arquivos utilizados:
+- Plant_1_Generation_Data.csv
+- Plant_1_Weather_Sensor_Data.csv
+- Plant_2_Generation_Data.csv
+- Plant_2_Weather_Sensor_Data.csv
+
+Como utilizar: Baixar os quatro arquivos, criar localmente um diretório datasets/ nas pasta raíz do projeto e armazenar os aquivos CSV.

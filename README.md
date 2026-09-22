@@ -1,4 +1,4 @@
-<h1 align="center"> ☀ Análise da Geração de Energia Solar ☀</h1>
+<h1 align="center"> ☀ Análise de Geração de Energia Solar ☀</h1>
 
 <h2 align="center"> Objetivo </h2>
 
@@ -12,32 +12,55 @@
 
 ---
 
-<h2 align="center"> Dados </h2>
+---
 
-O conjunto contém quatro arquivos:
+<h2 align="center"> Parte 1 </h2>
 
-    - Plant_1_Generation_Data.csv
-    - Plant_1_Weather_Sensor_Data.csv
-    - Plant_2_Generation_Data.csv
-    - Plant_2_Weather_Sensor_Data.csv
+> A primeira etapa contém:
+> - banco de dados MySQL
+> - integração entre Python e MySQL
+> - cinco consultas estratégicas
+> - análise estatística com Pandas
+
+---
+
+
+<h2 align="center"> Obtenção dos dados </h2>
 
 Os dados estão disponíveis no kaggle: [Solar Power Generation Data](https://www.kaggle.com/datasets/anikannal/solar-power-generation-data)
+
+Consulte o arquivo `fontes.txt` para mais detalhes.
 
 ---
 
 <h2 align="center"> Estrutura </h2>
 
 ``` 
-.
-├───datasets
-├───notebooks
-└───README.md
+analiseEnergiaSolar/
+├─── README.md datasets
+├─── fontes.txt
+├─── requirements.txt
+├─── .gitignore
+│
+├─── notebooks/
+│    └── 01-inspecao-inicial.ipynb
+│
+├─── src/
+│    └── integracao_mysql.py
+│    └── analise-estatistica.py
+│
+└─── sql/
+     └── criacao_banco.sql
 
 ```
 
-- <b>datasets</b>: diretório para armazenar os arquivos de dados utilizados no projeto em formato CSV.
-- <b>notebooks</b>: diretório parar armazenar os notebook desenvolvidos para inspecionar, tratar e analisar os dados.
 - <b>README.md</b>: informações gerais e documentação do projeto.
+- <b>fontes.txt</b>: informações específicas sobre a fonte dos dados e como utilizá-la.
+- <b>requirements.txt</b>: Arquivo que armazena as dependências do projeto.
+- <b>src/</b>: diretório para armazenar os scripts desenvolvidos em Python para integração com o banco de dados e para analise estatística.
+- <b>src/</b>: diretório para armazenar os arquivos contendo os comandos SQL para a criação da estrutura do banco de dados.
+- <b>notebooks</b>: diretório parar armazenar os notebooks desenvolvidos para inspecionar os dados.
+
 
 ---
 
@@ -56,9 +79,9 @@ Os dados estão disponíveis no kaggle: [Solar Power Generation Data](https://ww
 <h2 align="center"> Grupo </h2>
 
 <div align="center">
-    <h3>Phellipe Lisbôa</h3>
-    <h3>Jorge</h3>
-    <h3>Elisângela</h3>
+    <h3>Phellipe Lisbôa | <a href="https://www.linkedin.com/in/phellipe-lisboa/">Linkedin</a></h3>
+    <h3>Jorge | <a href="https://www.linkedin.com/in/jorge-alberto-santos-da-silva-b8547457/">Linkedin</a></h3>
+    <h3>Elisângela | <a href="https://www.linkedin.com/in/elisangela/">Linkedin</a></h3>
 </div>
 
 ---

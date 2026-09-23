@@ -22,13 +22,26 @@
 
 ---
 
-
 <h2 align="center"> Obtenção dos dados </h2>
 
 Os dados estão disponíveis no kaggle: [Solar Power Generation Data](https://www.kaggle.com/datasets/anikannal/solar-power-generation-data)
 
 Consulte o arquivo `fontes.txt` para mais detalhes.
 
+---
+
+<h2 align="center"> Preparação dos dados </h2>
+
+Antes da inserção no banco de dados MySQL, os dados passarão por uma preparação. As principais transformações planejadas são:
+ 
+- conversão das colunas de data e hora.
+- padronização dos nomes das colunas.
+- concatenação dos arquivos equivalentes das duas usinas.
+- preservação dos identificadores originais.
+- criação de códigos amigáveis para inversores e sensores.
+- validação da possível diferença de escala em `DC_POWER` na primeira usina.
+ 
+A preparação será realizada em cópias dos DataFrames, mantendo os quatro arquivos CSV originais sem alterações. 
 ---
 
 <h2 align="center"> Estrutura </h2>

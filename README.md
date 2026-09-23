@@ -57,8 +57,9 @@ analiseEnergiaSolar/
 │    └── 01-inspecao-inicial.ipynb
 │
 ├─── src/
-│    └── integracao_mysql.py
-│    └── analise-estatistica.py
+│    ├── analise-estatistica.py
+│    ├── integracao_mysql.py
+│    └── preparar_dados.py
 │
 └─── sql/
      └── criacao_banco.sql

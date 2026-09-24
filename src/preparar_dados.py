@@ -7,9 +7,14 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATASET_DIRECTORY = PROJECT_ROOT / "datasets"
 PROCESSED_DATA_DIRECTORY = DATASET_DIRECTORY / "processados"
 
+PLANT_CODE_MAPPING = {
+    4135001: "P01",
+    4136001: "P02"
+}
+
 
 def load_generation_data():
-    """Carrega os arquivos originais de geração das duas usinas."""
+    '''Carrega os arquivos originais de geração das duas usinas.'''
     plant_1_path = (DATASET_DIRECTORY / "Plant_1_Generation_Data.csv")
     plant_2_path = (DATASET_DIRECTORY / "Plant_2_Generation_Data.csv")
 
@@ -20,7 +25,7 @@ def load_generation_data():
 
 
 def prepare_generation_data(plant_1_generation, plant_2_generation):
-    """Padroniza e concatena os dados de geração."""
+    '''Padroniza e concatena os dados de geração.'''
     plant_1_generation_copy = plant_1_generation.copy()
     plant_2_generation_copy = plant_2_generation.copy()
 
@@ -63,7 +68,7 @@ def prepare_generation_data(plant_1_generation, plant_2_generation):
 
 
 def validate_generation_data(plant_1_generation, plant_2_generation, generation_data):
-    """Valida a estrutura do conjunto consolidado de geração."""
+    '''Valida a estrutura do conjunto consolidado de geração.'''
     expected_rows = (len(plant_1_generation) + len(plant_2_generation))
     actual_rows = len(generation_data)
 
@@ -104,7 +109,7 @@ def validate_generation_data(plant_1_generation, plant_2_generation, generation_
 
 
 def export_generation_data(generation_data):
-    """Exporta os dados de geração preparados para um arquivo CSV."""
+    '''Exporta os dados de geração preparados para um arquivo CSV.'''
     PROCESSED_DATA_DIRECTORY.mkdir(
         parents=True,
         exist_ok=True,
@@ -127,7 +132,7 @@ def export_generation_data(generation_data):
 
 
 def load_weather_data():
-    """Carrega os arquivos meteorológicos originais das duas usinas."""
+    '''Carrega os arquivos meteorológicos originais das duas usinas.'''
     plant_1_path = (DATASET_DIRECTORY / 'Plant_1_Weather_Sensor_Data.csv')
     plant_2_path = (DATASET_DIRECTORY / 'Plant_2_Weather_Sensor_Data.csv')
 
@@ -138,7 +143,7 @@ def load_weather_data():
 
 
 def prepare_weather_data(plant_1_weather, plant_2_weather):
-    """Padroniza e concatena os dados meteorológicos."""
+    '''Padroniza e concatena os dados meteorológicos.'''
     plant_1_weather_copy = plant_1_weather.copy()
     plant_2_weather_copy = plant_2_weather.copy()
 
@@ -176,7 +181,7 @@ def prepare_weather_data(plant_1_weather, plant_2_weather):
 
 
 def validate_weather_data(plant_1_weather, plant_2_weather, weather_data):
-    """Valida o conjunto meteorológico consolidado."""
+    '''Valida o conjunto meteorológico consolidado.'''
     expected_rows = (len(plant_1_weather) + len(plant_2_weather))
     actual_rows = len(weather_data)
 
@@ -226,7 +231,7 @@ def validate_weather_data(plant_1_weather, plant_2_weather, weather_data):
 
 
 def export_weather_data(weather_data):
-    """Exporta os dados meteorológicos preparados para CSV."""
+    '''Exporta os dados meteorológicos preparados para CSV.'''
     PROCESSED_DATA_DIRECTORY.mkdir(
         parents=True,
         exist_ok=True
@@ -246,23 +251,187 @@ def export_weather_data(weather_data):
     print(f"Arquivo gerado: {output_path}\n")
 
 
+def add_friendly_codes(generation_data, weather_data):
+    '''Adiciona códigos amigáveis para usinas, inversores e sensores.'''
+    generation_data_copy = generation_data.copy()
+    weather_data_copy = weather_data.copy()
+
+    generation_data_copy['plant_code'] = (
+        generation_data_copy['plant_id'].map(PLANT_CODE_MAPPING)
+    )
+
+    weather_data_copy['plant_code'] = (
+        weather_data_copy['plant_id'].map(PLANT_CODE_MAPPING)
+    )
+
+    # Gerar código dos inversores
+    inverter_mapping = {}
+
+    for plant_id, plant_code in PLANT_CODE_MAPPING.items():
+        inverter_source_keys = (
+            generation_data_copy.loc[
+                generation_data_copy['plant_id'] == plant_id,
+                'source_key'
+            ]
+            .drop_duplicates()
+            .sort_values()
+        )
+
+        for inverter_number, source_key in enumerate(inverter_source_keys, start=1):
+            inverter_mapping[(plant_id, source_key)] = (
+                f"INV-{plant_code}-{inverter_number:02d}"
+            )
+
+    generation_keys = zip(
+        generation_data_copy['plant_id'],
+        generation_data_copy['source_key']
+    )
+
+    generation_data_copy['inverter_code'] = [
+        inverter_mapping[key] for key in generation_keys]
+
+    # Gerar código dos sensores
+    sensor_mapping = {}
+
+    for plant_id, plant_code in PLANT_CODE_MAPPING.items():
+        sensor_source_keys = (
+            weather_data_copy.loc[
+                weather_data_copy['plant_id'] == plant_id,
+                'source_key'
+            ]
+            .drop_duplicates()
+            .sort_values()
+        )
+
+        for sensor_number, source_key in enumerate(sensor_source_keys, start=1):
+            sensor_mapping[(plant_id, source_key)] = (
+                f"SEN-{plant_code}-{sensor_number:02d}"
+            )
+
+    weather_keys = zip(
+        weather_data_copy['plant_id'],
+        weather_data_copy['source_key']
+    )
+
+    weather_data_copy['sensor_code'] = [sensor_mapping[key]
+                                        for key in weather_keys]
+
+    generation_data_copy = generation_data_copy[
+        [
+            "date_time",
+            "plant_id",
+            "plant_code",
+            "source_key",
+            "inverter_code",
+            "dc_power",
+            "ac_power",
+            "daily_yield",
+            "total_yield",
+        ]
+    ]
+
+    weather_data_copy = weather_data_copy[
+        [
+            "date_time",
+            "plant_id",
+            "plant_code",
+            "source_key",
+            "sensor_code",
+            "ambient_temperature",
+            "module_temperature",
+            "irradiation",
+        ]
+    ]
+
+    return generation_data_copy, weather_data_copy
+
+
+def validate_friendly_codes(generation_data, weather_data):
+    '''Valida os códigos amigáveis das usinas e equipamentos.'''
+    expected_plant_codes = {'P01', 'P02'}
+
+    generation_plant_codes = set(
+        generation_data['plant_code'].unique()
+    )
+
+    weather_plant_codes = set(
+        weather_data['plant_code'].unique()
+    )
+
+    inverters_per_plant = (
+        generation_data
+        .groupby('plant_code')['inverter_code']
+        .nunique()
+    )
+
+    sensors_per_plant = (
+        weather_data
+        .groupby('plant_code')['sensor_code']
+        .nunique()
+    )
+
+    inverter_codes_per_source = (
+        generation_data
+        .groupby(['plant_id', 'source_key'])['inverter_code']
+        .nunique()
+    )
+
+    sensor_codes_per_source = (
+        weather_data
+        .groupby(['plant_id', 'source_key'])['sensor_code']
+        .nunique()
+    )
+
+    assert generation_plant_codes == expected_plant_codes, (
+        "Os códigos das usinas nos dados de geração não correspondem aos valores esperados.")
+    assert weather_plant_codes == expected_plant_codes, (
+        "Os códigos das usinas nos dados meteorológicos não correspondem aos valores esperados.")
+    assert not generation_data[['plant_code', 'inverter_code']].isna().any(
+    ).any(), ("Foram encontrados códigos ausentes nos dados de geração.")
+    assert not weather_data[['plant_code', 'sensor_code']].isna().any().any(
+    ), ("Foram encontrados códigos ausentes nos dados meteorológicos.")
+    assert (inverters_per_plant == 22).all(
+    ), ("Foi encontrada uma quantidade inesperada de inversores em alguma usina.")
+    assert (sensors_per_plant == 1).all(
+    ), ("Foi encontrada uma quantidade inesperada de sensores em alguma usina.")
+
+    assert (inverter_codes_per_source == 1).all(
+    ), ("Um mesmo inversor recebeu mais de um código.")
+    assert (sensor_codes_per_source == 1).all(
+    ), ("Um mesmo sensor recebeu mais de um código.")
+
+    print("\nValidação dos códigos concluída com sucesso.")
+    print("Inversores por usina:")
+    print(inverters_per_plant)
+
+    print("\nSensores por usina:")
+    print(sensors_per_plant)
+
+
 def main():
     plant_1_generation, plant_2_generation = load_generation_data()
 
     generation_data = prepare_generation_data(
-        plant_1_generation, plant_2_generation)
+        plant_1_generation=plant_1_generation, plant_2_generation=plant_2_generation)
 
-    validate_generation_data(
-        plant_1_generation, plant_2_generation, generation_data)
-
-    export_generation_data(generation_data)
+    validate_generation_data(plant_1_generation=plant_1_generation,
+                             plant_2_generation=plant_2_generation, generation_data=generation_data)
 
     plant_1_weather, plant_2_weather = load_weather_data()
 
-    weather_data = prepare_weather_data(plant_1_weather, plant_2_weather)
+    weather_data = prepare_weather_data(
+        plant_1_weather=plant_1_weather, plant_2_weather=plant_2_weather)
 
-    validate_weather_data(plant_1_weather, plant_2_weather, weather_data)
+    validate_weather_data(plant_1_weather=plant_1_weather,
+                          plant_2_weather=plant_2_weather, weather_data=weather_data)
 
+    generation_data, weather_data = add_friendly_codes(
+        generation_data=generation_data, weather_data=weather_data)
+
+    validate_friendly_codes(
+        generation_data=generation_data, weather_data=weather_data)
+
+    export_generation_data(generation_data)
     export_weather_data(weather_data)
 
     print("\nResumo dos dados preparados:")

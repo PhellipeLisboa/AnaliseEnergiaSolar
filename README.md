@@ -38,7 +38,7 @@ Antes da inserção no banco de dados MySQL, os dados passarão por uma prepara�
 - padronização dos nomes das colunas.
 - concatenação dos arquivos equivalentes das duas usinas.
 - preservação dos identificadores originais.
-- criação de códigos amigáveis para inversores e sensores.
+- criação de códigos amigáveis para inversores, sensores e usinas.
 - validação da possível diferença de escala em `DC_POWER` na primeira usina.
  
 A preparação será realizada em cópias dos DataFrames, mantendo os quatro arquivos CSV originais sem alterações. 

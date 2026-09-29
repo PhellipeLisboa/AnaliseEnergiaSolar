@@ -346,6 +346,195 @@ def add_friendly_codes(generation_data, weather_data):
     return generation_data_copy, weather_data_copy
 
 
+def add_measurement_ids(generation_data, weather_data):
+    '''Ordena os conjuntos e adiciona identificadores únicos às medições.'''
+    generation_data_copy = generation_data.copy()
+    weather_data_copy = weather_data.copy()
+
+    generation_data_copy = (
+        generation_data_copy
+        .sort_values(
+            by=['plant_code', 'date_time', 'inverter_code']
+        )
+        .reset_index(drop=True)
+    )
+
+    weather_data_copy = (
+        weather_data_copy
+        .sort_values(
+            by=['plant_code', 'date_time', 'sensor_code']
+        )
+        .reset_index(drop=True)
+    )
+
+    generation_sequence = pd.Series(
+        range(1, len(generation_data_copy) + 1),
+        index=generation_data_copy.index
+    )
+
+    weather_sequence = pd.Series(
+        range(1, len(weather_data_copy) + 1),
+        index=weather_data_copy.index
+    )
+
+    generation_data_copy['id'] = (
+        generation_sequence.astype(str).str.zfill(
+            6) + "-" + generation_data_copy['inverter_code']
+    )
+
+    weather_data_copy['id'] = (
+        weather_sequence.astype(str).str.zfill(
+            6) + "-" + weather_data_copy['sensor_code']
+    )
+
+    generation_data_copy = generation_data_copy[
+        [
+            "id",
+            "date_time",
+            "plant_id",
+            "plant_code",
+            "source_key",
+            "inverter_code",
+            "dc_power",
+            "ac_power",
+            "daily_yield",
+            "total_yield"
+        ]
+    ]
+
+    weather_data_copy = weather_data_copy[
+        [
+            "id",
+            "date_time",
+            "plant_id",
+            "plant_code",
+            "source_key",
+            "sensor_code",
+            "ambient_temperature",
+            "module_temperature",
+            "irradiation"
+        ]
+    ]
+
+    return generation_data_copy, weather_data_copy
+
+
+def create_plants_data():
+    '''Cria o conjunto de referência das usinas.'''
+    plants_data = pd.DataFrame(
+        [
+            {
+                "plant_code": plant_code,
+                "plant_id": plant_id
+            }
+            for plant_id, plant_code in PLANT_CODE_MAPPING.items()
+        ]
+    )
+
+    plants_data = (
+        plants_data
+        .sort_values(by="plant_code")
+        .reset_index(drop=True)
+    )
+
+    return plants_data
+
+
+def validate_plants_data(plants_data):
+    '''Valida o conjunto de referência das usinas.'''
+    assert len(plants_data) == len(PLANT_CODE_MAPPING), (
+        "A quantidade de usinas não corresponde ao mapeamento esperado."
+    )
+
+    assert not plants_data["plant_code"].duplicated().any(), (
+        "Foram encontrados códigos de usina duplicados."
+    )
+
+    assert not plants_data["plant_id"].duplicated().any(), (
+        "Foram encontrados identificadores de usina duplicados."
+    )
+
+    assert not plants_data.isna().any().any(), (
+        "Foram encontrados valores ausentes nos dados das usinas."
+    )
+
+    print("\nValidação dos dados das usinas concluída com sucesso.")
+    print(plants_data)
+
+
+def export_plants_data(plants_data):
+    '''Exporta os dados de referência das usinas para CSV.'''
+    PROCESSED_DATA_DIRECTORY.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    output_path = PROCESSED_DATA_DIRECTORY / "plants.csv"
+
+    plants_data.to_csv(
+        output_path,
+        index=False
+    )
+
+    assert output_path.exists(), (
+        "O arquivo de usinas não foi criado."
+    )
+
+    print("\nDados das usinas exportados com sucesso.")
+    print(f"Arquivo gerado: {output_path}")
+
+
+def validate_measurement_ids(generation_data, weather_data):
+    '''Valida os identificadores únicos das medições.'''
+    generation_duplicated_ids = generation_data["id"].duplicated().sum()
+    weather_duplicated_ids = weather_data["id"].duplicated().sum()
+
+    generation_missing_ids = generation_data["id"].isna().sum()
+    weather_missing_ids = weather_data["id"].isna().sum()
+
+    generation_valid_format = generation_data["id"].str.match(
+        r"^\d{6}-INV-P\d{2}-\d{2}$"
+    ).all()
+
+    weather_valid_format = weather_data["id"].str.match(
+        r"^\d{6}-SEN-P\d{2}-\d{2}$"
+    ).all()
+
+    assert generation_duplicated_ids == 0, (
+        "Foram encontrados IDs duplicados nos dados de geração."
+    )
+
+    assert weather_duplicated_ids == 0, (
+        "Foram encontrados IDs duplicados nos dados meteorológicos."
+    )
+
+    assert generation_missing_ids == 0, (
+        "Foram encontrados IDs ausentes nos dados de geração."
+    )
+
+    assert weather_missing_ids == 0, (
+        "Foram encontrados IDs ausentes nos dados meteorológicos."
+    )
+
+    assert generation_valid_format, (
+        "Foram encontrados IDs de geração em formato inválido."
+    )
+
+    assert weather_valid_format, (
+        "Foram encontrados IDs meteorológicos em formato inválido."
+    )
+
+    print("\nValidação dos identificadores concluída com sucesso.")
+    print(
+        f"IDs de geração únicos: "
+        f"{generation_data['id'].nunique()}"
+    )
+    print(
+        f"IDs meteorológicos únicos: "
+        f"{weather_data['id'].nunique()}"
+    )
+
+
 def validate_friendly_codes(generation_data, weather_data):
     '''Valida os códigos amigáveis das usinas e equipamentos.'''
     expected_plant_codes = {'P01', 'P02'}
@@ -431,16 +620,38 @@ def main():
     validate_friendly_codes(
         generation_data=generation_data, weather_data=weather_data)
 
+    generation_data, weather_data = add_measurement_ids(
+        generation_data=generation_data,
+        weather_data=weather_data
+    )
+
+    validate_measurement_ids(
+        generation_data=generation_data,
+        weather_data=weather_data
+    )
+
+    plants_data = create_plants_data()
+
+    validate_plants_data(plants_data)
+
+    export_plants_data(plants_data)
     export_generation_data(generation_data)
     export_weather_data(weather_data)
 
     print("\nResumo dos dados preparados:")
     print(f"Geração: {generation_data.shape}")
     print(f"Dados meteorológicos: {weather_data.shape}")
+    print(f"Usinas: {plants_data.shape}")
+
+    print("-"*100)
+    print(plants_data)
+
     print("-"*100)
     print(generation_data)
+
     print("-"*100)
     print(weather_data)
+
     print("-"*100)
 
 
